@@ -18,6 +18,16 @@ describe("Task 1", () => {
       expect(response.body).toStrictEqual({ msg: "Alpha Alfredo" });
     });
 
+    it("test1", async () => {
+      const response = await getTask1("Si1x- -sEBHan   ");
+      expect(response.body).toStrictEqual({ msg: "Six Sebhan"});
+    });
+
+    it("test1", async () => {
+      const response = await getTask1("_-=12Riz@z _-RISO00tto!__");
+      expect(response.body).toStrictEqual({ msg: "Rizz Risotto" });
+    });
+
     it("error case", async () => {
       const response = await getTask1("");
       expect(response.status).toBe(400);
