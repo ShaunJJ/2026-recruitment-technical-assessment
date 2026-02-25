@@ -1,4 +1,6 @@
 import express, { Request, Response } from "express";
+import { sourceMapsEnabled } from "process";
+import { stringify } from "querystring";
 
 // ==== Type Definitions, feel free to add or modify ==========================
 interface cookbookEntry {
@@ -26,7 +28,7 @@ const app = express();
 app.use(express.json());
 
 // Store your recipes here!
-const cookbook: any = null;
+const cookbook: any = new Map();
 
 // Task 1 helper (don't touch)
 app.post("/parse", (req:Request, res:Response) => {
@@ -60,15 +62,47 @@ const parse_handwriting = (recipeName: string): string | null | string[] => {
 // [TASK 2] ====================================================================
 // Endpoint that adds a CookbookEntry to your magical cookbook
 app.post("/entry", (req:Request, res:Response) => {
-  // TODO: implement me
-  res.status(500).send("not yet implemented!")
-
+  if (!isEntry(req.body)) {
+    res.status(400).send("Not valid Entry!");
+    return;
+  }
+  const entry: recipe | ingredient = req.body;
+  if (cookbook.has(entry.name)) {
+    res.status(400).send("Duplicate Entry!");
+    return;
+  }
+  if (entry.type === "recipe" && 'requiredItems' in entry) {
+    const seen: Set<string> = new Set();
+    for (const item of entry.requiredItems) {
+      if (seen.has(item.name)) {
+        res.status(400).send("Non-Unique Required Items!");
+        return;
+      }
+      seen.add(item.name);
+    }
+  } else if (entry.type === "ingredient" && 'cookTime' in entry) {
+    if (entry.cookTime < 0) {
+      res.status(400).send("Invalid CookTime!");
+      return;
+    }
+  } else {
+    res.status(400).send("Invalid Type!");
+    return;
+  }
+  cookbook.set(entry.name, entry);
+  res.status(200).send({});
+  return;
 });
 
+const isEntry = (e: any): boolean => {
+  if ('name' in e && 'type' in e && ('requiredItems' in e || 'cookTime' in e)) {
+    return true;
+  }
+  return false;
+}
 // [TASK 3] ====================================================================
 // Endpoint that returns a summary of a recipe that corresponds to a query name
 app.get("/summary", (req:Request, res:Request) => {
-  // TODO: implement me
   res.status(500).send("not yet implemented!")
 
 });
