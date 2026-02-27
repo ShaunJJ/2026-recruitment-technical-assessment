@@ -52,7 +52,7 @@ app.post("/parse", (req:Request, res:Response) => {
 
 // [TASK 1] ====================================================================
 // Takes in a recipeName and returns it in a form that 
-const parse_handwriting = (recipeName: string): string | null | string[] => {
+const parse_handwriting = (recipeName: string): string | null => {
   if (recipeName.length == 0) 
     {
       return null;   
