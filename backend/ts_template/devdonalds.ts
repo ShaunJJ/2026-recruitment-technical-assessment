@@ -131,14 +131,16 @@ app.get("/summary", (req:Request, res:Request) => {
   summary.cooktime = 0;
   const ingredients: Map<string,number> = new Map();
   let reqItemArr: requiredItem[] = entry.requiredItems;
-  for (const item of reqItemArr) {
+  // Cant use for of loop because it doesnt reupdate the iterator max
+  for (let i = 0; i < reqItemArr.length; i++) {
+    const item = reqItemArr[i];
     let cookbookReference: recipe | ingredient;
     if (!(cookbookReference = cookbook.get(item.name))) {
       res.status(400).send("Unknown Required Items");
       return;
     } else if ('requiredItems' in cookbookReference) {
-      reqItemArr = reqItemArr.concat(cookbookReference.requiredItems.map((i: requiredItem):requiredItem => {i.quantity = i.quantity * item.quantity; return i}));
-      break;
+      reqItemArr = reqItemArr.concat(cookbookReference.requiredItems.map(i => {return{name: i.name, quantity: i.quantity * item.quantity}}));
+      continue;
     };
     let ingredientAmount: number;
     if (!(ingredientAmount = ingredients.get(item.name))) {
