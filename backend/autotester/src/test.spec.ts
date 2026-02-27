@@ -167,5 +167,40 @@ describe("Task 3", () => {
       const resp3 = await getTask3("Skibidi");
       expect(resp3.status).toBe(200);
     });
+
+    it("MultiLevel Marketing", async () => {
+      const TipTop = {
+        type: "recipe",
+        name: "Buns",
+        requiredItems: [{ name: "Toes", quantity: 3 }, {name: "Fat", quantity: 1}],
+      };
+      const resp1 = await postEntry(TipTop);
+      expect(resp1.status).toBe(200);
+
+      const feet = {
+        type: "recipe",
+        name: "Toes",
+        requiredItems: [{ name: "Fat", quantity: 1 }, {name: "Meat", quantity: 2}],
+      };
+      const resp12 = await postEntry(feet);
+      expect(resp12.status).toBe(200);
+
+      const resp2 = await postEntry({
+        type: "ingredient",
+        name: "Fat",
+        cookTime: 3,
+      });
+      expect(resp2.status).toBe(200);
+
+      const resp21 = await postEntry({
+        type: "ingredient",
+        name: "Meat",
+        cookTime: 1,
+      });
+      expect(resp21.status).toBe(200);
+
+      const resp3 = await getTask3("Buns");
+      expect(resp3.status).toBe(200);
+    });
   });
 });
