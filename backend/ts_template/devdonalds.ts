@@ -8,6 +8,12 @@ interface cookbookEntry {
   type: string;
 }
 
+interface recipeSummary {
+  name: string;
+  cooktime: number;
+  ingredients: requiredItem[];
+}
+
 interface requiredItem {
   name: string;
   quantity: number;
@@ -28,7 +34,7 @@ const app = express();
 app.use(express.json());
 
 // Store your recipes here!
-const cookbook: any = new Map();
+const cookbook: Map<string,recipe | ingredient> = new Map();
 
 // Task 1 helper (don't touch)
 app.post("/parse", (req:Request, res:Response) => {
@@ -51,12 +57,17 @@ const parse_handwriting = (recipeName: string): string | null | string[] => {
     {
       return null;   
     };
+  // Replace all - and _ with space, remove all non whitespace and alphanumeric chars, lowercases
   recipeName = recipeName.replace(/[_-]/g, ' ').replace(/[^a-zA-Z\s]/g, '').toLowerCase();
+  // Splits string into array of strings based on spaces / word
   let recipeNameSplit : string[] = recipeName.split(" ");
+  // Capitalises first letter of word
   recipeNameSplit = recipeNameSplit.map((word: string): string => word.charAt(0).toUpperCase() + word.slice(1));
+  // removes any solo spaces/duplicate spaces
   recipeNameSplit = recipeNameSplit.filter((word:string) => word !== "");
+  // rejoins array into string
   recipeName = recipeNameSplit.join(" ");
-  return recipeName
+  return recipeName;
 }
 
 // [TASK 2] ====================================================================
@@ -103,8 +114,46 @@ const isEntry = (e: any): boolean => {
 // [TASK 3] ====================================================================
 // Endpoint that returns a summary of a recipe that corresponds to a query name
 app.get("/summary", (req:Request, res:Request) => {
-  res.status(500).send("not yet implemented!")
+  const name: string = req.query.name;
+  const entry: recipe | ingredient = cookbook.get(name);
+  let summary :recipeSummary = {
+    name: name,
+    cooktime: 0,
+    ingredients: []
+  };
 
+  if (!entry || 'cookTime' in entry) {
+    res.status(400).send("Invalid Input!");
+    return;
+  } 
+
+  summary.name = name;
+  summary.cooktime = 0;
+  const ingredients: Map<string,number> = new Map();
+  let reqItemArr: requiredItem[] = entry.requiredItems;
+  for (const item of reqItemArr) {
+    let cookbookReference: recipe | ingredient;
+    if (!(cookbookReference = cookbook.get(item.name))) {
+      res.status(400).send("Unknown Required Items");
+      return;
+    } else if ('requiredItems' in cookbookReference) {
+      reqItemArr = reqItemArr.concat(cookbookReference.requiredItems.map((i: requiredItem):requiredItem => {i.quantity = i.quantity * item.quantity; return i}));
+      break;
+    };
+    let ingredientAmount: number;
+    if (!(ingredientAmount = ingredients.get(item.name))) {
+      ingredients.set(item.name, item.quantity);
+    } else {
+      ingredients.set(item.name, item.quantity + ingredientAmount);
+    };
+  };
+
+  for (const ingredient of ingredients[Symbol.iterator]()) {
+    summary.ingredients.push({name: ingredient[0], quantity: ingredient[1]});
+    summary.cooktime += (cookbook.get(ingredient[0]) as ingredient).cookTime;
+  };
+  res.status(200).send(summary);
+  return;
 });
 
 // =============================================================================
